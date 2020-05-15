@@ -24,6 +24,7 @@ import os
 import logging
 import argparse
 import random
+import json
 from tqdm import tqdm, trange
 
 import numpy as np
@@ -336,19 +337,34 @@ class ColaProcessor(DataProcessor):
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
 
-    def get_labels(self):
+    def get_labels(self, data_dir):
         """See base class."""
-        return ["0", "1"]
+        lines = self._read_tsv(os.path.join(data_dir, "train.tsv"))
+        
+        labels = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            else:
+                label = tokenization.convert_to_unicode(line[1])
+                labels.append(label)
+        label_set = sorted(list(set(labels)))
+        return label_set
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
+        
         examples = []
         for (i, line) in enumerate(lines):
-            guid = "%s-%s" % (set_type, i)
-            text_a = tokenization.convert_to_unicode(line[3])
-            label = tokenization.convert_to_unicode(line[1])
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+            if i == 0:
+                continue
+            else:
+                guid = "%s-%s" % (set_type, i)
+                text_a = tokenization.convert_to_unicode(line[0])
+                label = tokenization.convert_to_unicode(line[1])
+
+                examples.append(
+                    InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
 
 
@@ -604,9 +620,13 @@ def main():
     parser.add_argument("--tasks",
                         default="all",
                         help="Which set of tasks to train on.")
+    parser.add_argument("--nb_task",
+                    default="all",
+                    help="Number of classification tasks.")
     parser.add_argument("--task_id",
-                        default=1,
-                        help="ID of single task to train on if using that setting.")
+                        default=2,
+                        type=int,
+                        help="")
     parser.add_argument("--learning_rate",
                         default=5e-5,
                         type=float,
@@ -704,12 +724,22 @@ def main():
         data_dirs = ['CoLA', 'MRPC', 'MNLI', 'RTE', 'STS-B', 'SST-2', 'QQP', 'QNLI']
         task_names = [task_names[int(args.task_id)]]
         data_dirs = [data_dirs[int(args.task_id)]]
+    
+    elif args.tasks == 'all_class':
+
+        task_names = ['cola']*args.nb_task
+        with open(args.data_directory) as f:
+            data_directory = json.load(f)
+        data_dirs = data_directory
+
+        if len(data_dirs) != *args.nb_task:
+            raise ValueError("Number of tasks is not match the number of datasets.")
+
     if task_names[0] not in processors:
         raise ValueError("Task not found: %s" % (task_name))
 
     processor_list = [processors[task_name]() for task_name in task_names]
-    label_list = [processor.get_labels() for processor in processor_list]
-
+    label_list = [processor.get_labels(args.data_dir + data_dir) for processor, data_dir in zip(processor_list, data_dirs)]
     tokenizer = tokenization.FullTokenizer(
         vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
 
@@ -720,12 +750,12 @@ def main():
         train_examples = [processor.get_train_examples(args.data_dir + data_dir) for processor, data_dir in zip(processor_list, data_dirs)]
         num_train_steps = int(
             len(train_examples[0]) / args.train_batch_size * args.num_train_epochs)
-        if args.tasks == 'all':
+        if args.tasks == 'all' or args.tasks == 'all_class':
             total_tr = 300 * num_tasks * args.num_train_epochs
         else:
             total_tr = int(0.5 * num_train_steps)
 
-    if args.tasks == 'all':
+    if args.tasks == 'all' or args.tasks == 'all_class':
         steps_per_epoch = args.gradient_accumulation_steps * 300 * num_tasks
     else:
         steps_per_epoch = int(num_train_steps/(2. * args.num_train_epochs))
