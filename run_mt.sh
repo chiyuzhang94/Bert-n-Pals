@@ -25,7 +25,7 @@ python run_multi_task.py \
   --tasks 'all_class' \
   --sample 'anneal'\
   --nb_task 2 \
-  --data_directory './data_directory.json'
+  --data_directory './data_directory.json' \
   --multi \
   --do_train \
   --do_eval \
