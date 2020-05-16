@@ -849,12 +849,15 @@ def main():
     global_step = 0
     if args.do_train:
         loaders = []
+        data_sizes = []
         logger.info("  Num Tasks = %d", len(train_examples))
         for i, task in enumerate(task_names):
             train_features = convert_examples_to_features(
                 train_examples[i], label_list[i], args.max_seq_length, tokenizer, task)
             logger.info("***** training data for %s *****", task)
             logger.info("  Data size = %d", len(train_features))
+
+            data_sizes.append(len(train_features))
 
             all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
             all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
@@ -876,7 +879,7 @@ def main():
         model.train()
         best_score = 0.
         if args.sample == 'sqrt' or args.sample == 'prop':
-            probs = [6680, 2865, 306798, 1945, 4491, 52616, 284257, 84715]
+            probs = data_sizes
             if args.sample == 'prop':
                 alpha = 1.
             if args.sample == 'sqrt':
@@ -888,7 +891,7 @@ def main():
         epoch = 0
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             if args.sample == 'anneal':
-                probs = [6680, 2865, 306798, 1945, 4491, 52616, 284257, 84715]
+                probs = data_sizes
                 alpha = 1. - 0.8 * epoch / (args.num_train_epochs - 1)
                 probs = [p**alpha for p in probs]
                 tot = sum(probs)
