@@ -732,12 +732,12 @@ def main():
     
     elif args.tasks == 'all_class':
 
-        task_names = ['cola']*args.nb_task
+        task_names = ['cola']*int(args.nb_task)
         with open(args.data_directory) as f:
             data_directory = json.load(f)
         data_dirs = data_directory
 
-        if len(data_dirs) != args.nb_task:
+        if len(data_dirs) != int(args.nb_task):
             raise ValueError("Number of tasks is not match the number of datasets.")
 
     if task_names[0] not in processors:
