@@ -737,7 +737,7 @@ def main():
             data_directory = json.load(f)
         data_dirs = data_directory
 
-        if len(data_dirs) != *args.nb_task:
+        if len(data_dirs) != args.nb_task:
             raise ValueError("Number of tasks is not match the number of datasets.")
 
     if task_names[0] not in processors:
