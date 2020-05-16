@@ -773,8 +773,8 @@ def main():
         if args.multi:
             partial = torch.load(args.init_checkpoint, map_location='cpu')
             print(partial.keys())
-            print("model_dict",model_dict.keys())
             model_dict = model.bert.state_dict()
+            print("model_dict",model_dict.keys())
             update = {}
             for n, p in model_dict.items():
                 print(n)
