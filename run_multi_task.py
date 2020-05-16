@@ -772,12 +772,13 @@ def main():
     if args.init_checkpoint is not None:
         if args.multi:
             partial = torch.load(args.init_checkpoint, map_location='cpu')
-            print(partial.keys())
+            # print(partial.keys())
             model_dict = model.bert.state_dict()
-            print("model_dict",model_dict.keys())
+            # print("model_dict",model_dict.keys())
             update = {}
             for n, p in model_dict.items():
-                print(n)
+                # print(n)
+                partial_n = 'bert.' + n
                 if 'aug' in n or 'mult' in n:
                     update[n] = p
                     if 'pooler.mult' in n and 'bias' in n:
@@ -785,7 +786,7 @@ def main():
                     if 'pooler.mult' in n and 'weight' in n:
                         update[n] = partial['pooler.dense.weight']
                 else:
-                    update[n] = partial[n]
+                    update[n] = partial[partial_n]
             model.bert.load_state_dict(update)
         else:
             model.bert.load_state_dict(torch.load(args.init_checkpoint, map_location='cpu'))
