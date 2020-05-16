@@ -27,6 +27,7 @@ python run_multi_task.py \
   --nb_task 2 \
   --data_directory './data_directory.json' \
   --multi \
+  --do_lower_case \
   --do_train \
   --do_eval \
   --data_dir $GLUE_DIR/ \
