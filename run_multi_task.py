@@ -772,9 +772,11 @@ def main():
     if args.init_checkpoint is not None:
         if args.multi:
             partial = torch.load(args.init_checkpoint, map_location='cpu')
+            print(partial.keys())
             model_dict = model.bert.state_dict()
             update = {}
             for n, p in model_dict.items():
+                print(n)
                 if 'aug' in n or 'mult' in n:
                     update[n] = p
                     if 'pooler.mult' in n and 'bias' in n:
