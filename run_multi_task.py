@@ -495,6 +495,9 @@ def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, proc
             label_list, tokenizer, eval_dataloader, task_id, i):
 
     model.eval()
+    all_pred=[]
+    all_label = []
+    
     eval_loss, eval_accuracy = 0, 0
     nb_eval_steps, nb_eval_examples = 0, 0
     for input_ids, input_mask, segment_ids, label_ids in eval_dataloader:
@@ -541,6 +544,7 @@ def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, proc
     output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
     with open(output_eval_file, "w") as writer:
         logger.info("***** Eval results *****")
+        logger.info("***** TASK %s *****", args.data_dirs[i])
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
             writer.write("%s = %s\n" % (key, str(result[key])))
@@ -685,6 +689,7 @@ def main():
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
+        args.n_gpus = n_gpu
     else:
         device = torch.device("cuda", args.local_rank)
         n_gpu = 1
@@ -736,6 +741,7 @@ def main():
         with open(args.data_directory) as f:
             data_directory = json.load(f)
         data_dirs = data_directory
+        args.data_dirs = data_dirs
 
         if len(data_dirs) != int(args.nb_task):
             raise ValueError("Number of tasks is not match the number of datasets.")
@@ -772,9 +778,9 @@ def main():
     if args.init_checkpoint is not None:
         if args.multi:
             partial = torch.load(args.init_checkpoint, map_location='cpu')
-            print("partial",partial.keys())
+            # print("partial",partial.keys())
             model_dict = model.bert.state_dict()
-            print("model_dict",model_dict.keys())
+            # print("model_dict",model_dict.keys())
             update = {}
             for n, p in model_dict.items():
                 # print(n)
@@ -806,7 +812,7 @@ def main():
     elif n_gpu > 1:
         model = torch.nn.DataParallel(model)
     if args.optim == 'normal':
-        no_decay = ['bias', 'gamma', 'beta']
+        no_decay = ['bias', 'gamma', 'beta','LayerNorm.weight']
         optimizer_parameters = [
                 {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.01},
                 {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.0}
@@ -816,7 +822,7 @@ def main():
                              warmup=args.warmup_proportion,
                              t_total=total_tr)
     else:
-        no_decay = ['bias', 'gamma', 'beta']
+        no_decay = ['bias', 'gamma', 'beta','LayerNorm.weight']
         base = ['attn']
         optimizer_parameters = [
                 {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and not any(nd in n for nd in base)], 'weight_decay_rate': 0.01},
@@ -864,7 +870,7 @@ def main():
         for i, task in enumerate(task_names):
             train_features = convert_examples_to_features(
                 train_examples[i], label_list[i], args.max_seq_length, tokenizer, task)
-            logger.info("***** training data for %s *****", task)
+            logger.info("***** Training Data for %s *****", args.data_dirs[i])
             logger.info("  Data size = %d", len(train_features))
 
             data_sizes.append(len(train_features))
@@ -944,10 +950,16 @@ def main():
                 ev_acc += do_eval(model, logger, args, device, tr_loss[i], nb_tr_steps, global_step, processor_list[i], 
                                   label_list[i], tokenizer, eval_loaders[i], task, i)
             logger.info("Total acc: {}".format(ev_acc))
+            
+
             if ev_acc > best_score:
                 best_score = ev_acc
-                model_dir = os.path.join(args.output_dir, "best_model.pth")
-                torch.save(model.state_dict(), model_dir)
+                model_dir = os.path.join(args.output_dir, "best_model.pt")
+                if args.n_gpus > 1:
+                	torch.save(model.module.cpu.().state_dict(), model_dir)
+                else: 
+                	torch.save(model.cpu.().state_dict(), model_dir)
+
             logger.info("Best Total acc: {}".format(best_score))
 
         ev_acc = 0.
