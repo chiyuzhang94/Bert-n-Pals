@@ -772,9 +772,9 @@ def main():
     if args.init_checkpoint is not None:
         if args.multi:
             partial = torch.load(args.init_checkpoint, map_location='cpu')
-            # print(partial.keys())
+            print("partial",partial.keys())
             model_dict = model.bert.state_dict()
-            # print("model_dict",model_dict.keys())
+            print("model_dict",model_dict.keys())
             update = {}
             for n, p in model_dict.items():
                 # print(n)
