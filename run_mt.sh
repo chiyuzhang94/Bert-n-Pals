@@ -24,7 +24,7 @@ python run_multi_task.py \
   --output_dir $SAVE_DIR/pals \
   --tasks 'all_class' \
   --sample 'anneal'\
-  --nb_task 2 \
+  --nb_task 4 \
   --data_directory './data_directory.json' \
   --multi \
   --do_lower_case \
@@ -34,8 +34,8 @@ python run_multi_task.py \
   --vocab_file $BERT_BASE_DIR/vocab.txt \
   --bert_config_file $BERT_BASE_DIR/pals_config.json \
   --init_checkpoint $BERT_PYTORCH_DIR/pytorch_model.bin \
-  --max_seq_length 128 \
-  --train_batch_size 32 \
+  --max_seq_length 64 \
+  --train_batch_size 64 \
   --learning_rate 2e-5 \
   --num_train_epochs 25.0 \
-  --gradient_accumulation_steps 1
+  --gradient_accumulation_steps 8
