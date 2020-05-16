@@ -611,7 +611,7 @@ def main():
                         type=int,
                         help="Total batch size for training.")
     parser.add_argument("--eval_batch_size",
-                        default=8,
+                        default=64,
                         type=int,
                         help="Total batch size for eval.")
     parser.add_argument("--h_aug",
@@ -623,6 +623,11 @@ def main():
     parser.add_argument("--nb_task",
                     default="all",
                     help="Number of classification tasks.")
+
+    parser.add_argument("--data_directory",
+                    default="",
+                    help="paths of classification tasks.")
+
     parser.add_argument("--task_id",
                         default=2,
                         type=int,
