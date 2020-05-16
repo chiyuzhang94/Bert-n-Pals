@@ -30,6 +30,7 @@ from tqdm import tqdm, trange
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score, classification_report, confusion_matrix
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
@@ -510,9 +511,14 @@ def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, proc
 
         if task_id == 'cola':
             logits = logits.detach()
-            label_ids = label_ids.to('cpu').numpy()
+            label_ids_np = label_ids.to('cpu').numpy()
             _, preds = logits.max(dim=1)
-            tmp_eval_accuracy = matthews_corrcoef(label_ids, preds.data.cpu().numpy())
+            tmp_eval_accuracy = matthews_corrcoef(label_ids_np, preds.data.cpu().numpy())
+            
+            _, predicted = torch.max(logits.cpu().data, 1)
+            all_pred.extend(predicted)
+            all_label.extend(label_ids.cpu())
+
         elif task_id == 'sts':
             logits = logits.detach()
             label_ids = label_ids.to('cpu').numpy()
@@ -536,15 +542,15 @@ def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, proc
     eval_loss = eval_loss / nb_eval_steps
     eval_accuracy = eval_accuracy / nb_eval_examples
 
-    result = {'eval_loss': eval_loss,
-              'eval_accuracy': eval_accuracy,
-              'global_step': global_step,
-              'loss': tr_loss/nb_tr_steps}
+    result = {'Eval_loss': eval_loss,
+              'Eval_accuracy': eval_accuracy,
+              'Eval_f1': f1_score(all_label, all_pred, average='macro') ,
+              'Global_step': global_step,
+              'Loss': tr_loss/nb_tr_steps}
 
     output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
     with open(output_eval_file, "w") as writer:
-        logger.info("***** Eval results *****")
-        logger.info("***** TASK %s *****", args.data_dirs[i])
+        logger.info("******** TASK %s Eval Results ********", args.data_dirs[i])
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
             writer.write("%s = %s\n" % (key, str(result[key])))
@@ -956,9 +962,11 @@ def main():
                 best_score = ev_acc
                 model_dir = os.path.join(args.output_dir, "best_model.pt")
                 if args.n_gpus > 1:
-                	torch.save(model.module.cpu().state_dict(), model_dir)
+                    save_model = model.module.cpu().state_dict()
+                	torch.save(save_model, model_dir)
                 else: 
-                	torch.save(model.cpu().state_dict(), model_dir)
+                    save_model = model.cpu().state_dict()
+                	torch.save(save_model, model_dir)
 
             logger.info("Best Total acc: {}".format(best_score))
 
