@@ -912,7 +912,7 @@ def main():
             for step in range(steps_per_epoch):
                 if args.sample != 'rr':
                     if step % args.gradient_accumulation_steps == 0:
-                        task_id = np.random.choice(8, p=probs)
+                        task_id = np.random.choice(int(args.nb_task), p=probs)
                 else:
                     task_id = task_id % num_tasks
                 batch = next(loaders[task_id])
