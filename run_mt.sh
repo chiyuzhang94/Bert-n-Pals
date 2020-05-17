@@ -13,6 +13,7 @@
 module load cuda cudnn
 source ~/py3.6/bin/activate
 
+rm -r save/*
 export BERT_BASE_DIR=./bert-base-uncased
 export BERT_PYTORCH_DIR=./bert-base-uncased
 export GLUE_DIR=/home/chiyu94/scratch/Bert-n-Pals/data/semeval_normalized
