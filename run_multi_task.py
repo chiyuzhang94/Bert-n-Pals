@@ -961,12 +961,7 @@ def main():
             if ev_acc > best_score:
                 best_score = ev_acc
                 model_dir = os.path.join(args.output_dir, "best_model.pt")
-                if args.n_gpus > 1:
-                    save_model = model.module.cpu().state_dict()
-                    torch.save(save_model, model_dir)
-                else: 
-                    save_model = model.cpu().state_dict()
-                    torch.save(save_model, model_dir)
+                torch.save(model.state_dict(), model_dir)
 
             logger.info("Best Total acc: {}".format(best_score))
 
