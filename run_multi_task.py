@@ -773,7 +773,7 @@ def main():
             total_tr = int(0.5 * num_train_steps)
 
     if args.tasks == 'all' or args.tasks == 'all_class':
-        steps_per_epoch = args.gradient_accumulation_steps * 300 * num_tasks
+        steps_per_epoch = args.gradient_accumulation_steps * 900 * num_tasks
     else:
         steps_per_epoch = int(num_train_steps/(2. * args.num_train_epochs))
     bert_config.num_tasks = num_tasks
