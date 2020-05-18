@@ -2,7 +2,7 @@
 #SBATCH --time=12:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:2
 #SBATCH --mem=64G
 #SBATCH --job-name=mt
 #SBATCH --output=mt.out
@@ -25,7 +25,7 @@ python run_multi_task.py \
   --output_dir $SAVE_DIR/pals \
   --tasks 'all_class' \
   --sample 'anneal'\
-  --nb_task 4 \
+  --nb_task 2 \
   --data_directory './data_directory.json' \
   --multi \
   --do_lower_case \
