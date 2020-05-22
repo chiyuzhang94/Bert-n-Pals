@@ -790,8 +790,8 @@ def main():
             update = {}
             for n, p in model_dict.items():
                 # print(n)
-                partial_n = 'bert.' + n
-                partial_n = partial_n.replace("gamma", "weight").replace("beta", "bias")
+                partial_n = n
+                # partial_n = partial_n.replace("gamma", "weight").replace("beta", "bias")
                 if 'aug' in n or 'mult' in n:
                     update[n] = p
                     if 'pooler.mult' in n and 'bias' in n:

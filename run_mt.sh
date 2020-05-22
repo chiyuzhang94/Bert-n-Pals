@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=12:00:00
+#SBATCH --time=3:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:2
@@ -14,8 +14,8 @@ module load cuda cudnn
 source ~/py3.6/bin/activate
 
 rm -r save/*
-export BERT_BASE_DIR=./bert-base-uncased
-export BERT_PYTORCH_DIR=./bert-base-uncased
+export BERT_BASE_DIR=./bert-base-cased
+export BERT_PYTORCH_DIR=./bert-base-cased
 export GLUE_DIR=/home/chiyu94/scratch/Bert-n-Pals/data/semeval_normalized
 export SAVE_DIR=./save
 
@@ -28,7 +28,6 @@ python run_multi_task.py \
   --nb_task 2 \
   --data_directory './data_directory.json' \
   --multi \
-  --do_lower_case \
   --do_train \
   --do_eval \
   --data_dir $GLUE_DIR/ \
