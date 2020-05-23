@@ -973,8 +973,8 @@ def main():
 
                 output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
                 with open(output_eval_file, "a") as writer:
-                    writer.write("\n\n******** Epoch %s ********\n", str(epoch))
-                    writer.write("******** TASK %s Eval Results ********\n", args.data_dirs[i])
+                    writer.write("\n\n******** Epoch %s ********\n"%(str(epoch)))
+                    writer.write("******** TASK %s Eval Results ********\n"% (args.data_dirs[i]))
                     for key in sorted(result.keys()):
                         writer.write("%s = %s\n" % (key, str(result[key])))
 
