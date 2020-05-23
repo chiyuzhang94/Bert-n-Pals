@@ -792,7 +792,10 @@ def main():
                 partial_n = n
                 if 'bert.' in list(partial.keys())[3]:
                     partial_n = 'bert.'+ n
-                if "LayerNorm" in n:
+                
+                try:
+                    _ = partial[partial_n]
+                except:
                     partial_n = partial_n.replace("gamma", "weight").replace("beta", "bias")
 
                 if 'aug' in n or 'mult' in n:
