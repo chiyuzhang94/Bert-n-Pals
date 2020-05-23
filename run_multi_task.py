@@ -623,6 +623,10 @@ def main():
                         default=64,
                         type=int,
                         help="Total batch size for eval.")
+    parser.add_argument("--epoch_step",
+                        default=300,
+                        type=int,
+                        help="Step for each epoch.")
     parser.add_argument("--h_aug",
                         default="n/a",
                         help="Size of hidden state for adapters..")
@@ -690,6 +694,8 @@ def main():
         "qqp": QQPProcessor,
         "qnli": QNLIProcessor,
     }
+
+    args.epoch_step = int(args.epoch_step)
 
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
@@ -772,7 +778,7 @@ def main():
             total_tr = int(0.5 * num_train_steps)
 
     if args.tasks == 'all' or args.tasks == 'all_class':
-        steps_per_epoch = args.gradient_accumulation_steps * 900 * num_tasks
+        steps_per_epoch = args.gradient_accumulation_steps * args.epoch_step * num_tasks
     else:
         steps_per_epoch = int(num_train_steps/(2. * args.num_train_epochs))
     bert_config.num_tasks = num_tasks
@@ -988,6 +994,11 @@ def main():
             torch.save(model.state_dict(), model_dir)
 
             logger.info("Best Total acc: {}".format(best_score))
+
+        with open(output_eval_file, "a") as writer:
+            writer.write("\n\n******************************************")
+            for k, v in all_result_acc_dict.item():
+                writer.write("TASK %s: best accuracy %s at %s, best F1 %s at %s \n"% (k,str(max(v)),str(v.index(max(v))+1), str(max(all_result_f1_dict[k])), str(all_result_f1_dict[k].index(max(all_result_f1_dict[k]))+1)))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -l walltime=12:00:00,select=1:ncpus=2:ompthreads=12:ngpus=1:mem=64gb
+#PBS -l walltime=3:00:00,select=1:ncpus=2:ompthreads=12:ngpus=1:mem=64gb
 #PBS -N multi-task
 #PBS -A st-amuham01-1-gpu
 #PBS -M chiyuzh@mail.ubc.ca
@@ -24,6 +24,7 @@ python3 /scratch/st-amuham01-1/chiyuzh/Bert-n-Pals/run_multi_task.py \
   --seed 42 \
   --output_dir $SAVE_DIR/pals \
   --tasks 'all_class' \
+  --epoch_step 200 \
   --sample 'anneal'\
   --nb_task 4 \
   --data_directory '/scratch/st-amuham01-1/chiyuzh/Bert-n-Pals/data_directory.json' \
@@ -38,5 +39,5 @@ python3 /scratch/st-amuham01-1/chiyuzh/Bert-n-Pals/run_multi_task.py \
   --max_seq_length 64 \
   --train_batch_size 64 \
   --learning_rate 2e-5 \
-  --num_train_epochs 25.0 \
+  --num_train_epochs 2.0 \
   --gradient_accumulation_steps 8
