@@ -39,6 +39,8 @@ import tokenization
 from modeling import BertConfig, BertForSequenceClassification, BertForMultiTask
 from optimization import BERTAdam
 
+from collection import defaultdict
+
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.INFO)
@@ -493,7 +495,7 @@ def accuracy(out, labels):
 
 
 def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, processor, 
-            label_list, tokenizer, eval_dataloader, task_id, i):
+            label_list, tokenizer, eval_dataloader, task_id, i, epoch_num):
 
     model.eval()
     all_pred=[]
@@ -540,21 +542,18 @@ def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, proc
         nb_eval_steps += 1
 
     eval_loss = eval_loss / nb_eval_steps
-    eval_accuracy = eval_accuracy / nb_eval_examples
+    eval_accuracy = accuracy_score(all_label, all_pred, average='macro')
 
     result = {'Eval_loss': eval_loss,
-              'Eval_accuracy': eval_accuracy,
+              'Eval_accuracy': accuracy_score(all_label, all_pred, average='macro') ,
               'Eval_f1': f1_score(all_label, all_pred, average='macro') ,
               'Global_step': global_step,
               'Loss': tr_loss/nb_tr_steps}
-
-    output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
-    with open(output_eval_file, "w") as writer:
-        logger.info("******** TASK %s Eval Results ********", args.data_dirs[i])
-        for key in sorted(result.keys()):
-            logger.info("  %s = %s", key, str(result[key]))
-            writer.write("%s = %s\n" % (key, str(result[key])))
-    return eval_accuracy
+    
+    logger.info("******** TASK %s Eval Results ********", args.data_dirs[i])
+    for key in sorted(result.keys()):
+        logger.info("  %s = %s", key, str(result[key]))
+    return eval_accuracy, result
 
 
 def main():
@@ -915,7 +914,11 @@ def main():
             probs = [p/tot for p in probs]
         task_id = 0
         epoch = 0
-        for _ in trange(int(args.num_train_epochs), desc="Epoch"):
+
+        all_result_acc_dict = defaultdict(list)
+        all_result_f1_dict = defaultdict(list)
+
+        for epoch_num in trange(int(args.num_train_epochs), desc="Epoch"):
             if args.sample == 'anneal':
                 probs = data_sizes
                 alpha = 1. - 0.8 * epoch / (args.num_train_epochs - 1)
@@ -956,24 +959,32 @@ def main():
                         task_id += 1
             epoch += 1
             ev_acc = 0.
+            logger.info("******** Epoch %s ********", str(epoch))
             for i, task in enumerate(task_names):
-                ev_acc += do_eval(model, logger, args, device, tr_loss[i], nb_tr_steps, global_step, processor_list[i], 
-                                  label_list[i], tokenizer, eval_loaders[i], task, i)
+                acc, result = do_eval(model, logger, args, device, tr_loss[i], nb_tr_steps, global_step, processor_list[i], 
+                                  label_list[i], tokenizer, eval_loaders[i], task, i, epoch)
+                ev_acc += acc
+
+                all_result_acc_dict[args.data_dirs[i]].append(acc)
+                all_result_f1_dict[args.data_dirs[i]].append(result['Eval_f1'])
+
+                output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
+                with open(output_eval_file, "a") as writer:
+                	writer.write("\n\n******** Epoch %s ********\n", str(epoch))
+                	writer.write("******** TASK %s Eval Results ********\n", args.data_dirs[i])
+                	for key in sorted(result.keys()):
+				        writer.write("%s = %s\n" % (key, str(result[key])))
+
             logger.info("Total acc: {}".format(ev_acc))
             
 
             if ev_acc > best_score:
                 best_score = ev_acc
-                model_dir = os.path.join(args.output_dir, "best_model.pt")
-                torch.save(model.state_dict(), model_dir)
+	        
+	        model_dir = os.path.join(args.output_dir, "mt"+str(args.nb_task)+"_model_"+str(epoch)+".pt")
+	        torch.save(model.state_dict(), model_dir)
 
             logger.info("Best Total acc: {}".format(best_score))
-
-        ev_acc = 0.
-        for i, task in enumerate(task_names):
-            ev_acc += do_eval(model, logger, args, device, tr_loss[i], nb_tr_steps, global_step, processor_list[i], 
-                              label_list[i], tokenizer, eval_loaders[i], task, i)
-        logger.info("Total acc: {}".format(ev_acc))
 
 
 if __name__ == "__main__":
