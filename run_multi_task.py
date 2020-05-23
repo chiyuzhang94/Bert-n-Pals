@@ -39,7 +39,7 @@ import tokenization
 from modeling import BertConfig, BertForSequenceClassification, BertForMultiTask
 from optimization import BERTAdam
 
-from collection import defaultdict
+from collections import defaultdict
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s', 
                     datefmt = '%m/%d/%Y %H:%M:%S',
