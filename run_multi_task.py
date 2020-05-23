@@ -542,10 +542,10 @@ def do_eval(model, logger, args, device, tr_loss, nb_tr_steps, global_step, proc
         nb_eval_steps += 1
 
     eval_loss = eval_loss / nb_eval_steps
-    eval_accuracy = accuracy_score(all_label, all_pred, average='macro')
+    eval_accuracy = accuracy_score(all_label, all_pred)
 
     result = {'Eval_loss': eval_loss,
-              'Eval_accuracy': accuracy_score(all_label, all_pred, average='macro') ,
+              'Eval_accuracy': accuracy_score(all_label, all_pred) ,
               'Eval_f1': f1_score(all_label, all_pred, average='macro') ,
               'Global_step': global_step,
               'Loss': tr_loss/nb_tr_steps}
