@@ -997,7 +997,7 @@ def main():
 
         with open(output_eval_file, "a") as writer:
             writer.write("\n\n******************************************")
-            for k, v in all_result_acc_dict.item():
+            for k, v in all_result_acc_dict.items():
                 writer.write("TASK %s: best accuracy %s at %s, best F1 %s at %s \n"% (k,str(max(v)),str(v.index(max(v))+1), str(max(all_result_f1_dict[k])), str(all_result_f1_dict[k].index(max(all_result_f1_dict[k]))+1)))
 
 
